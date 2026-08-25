@@ -1,0 +1,2536 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>aquaROSE Timer</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    font-family:
+        "Hachi Maru Pop",
+        "Yu Gothic",
+        sans-serif;
+
+    color: white;
+    background: #071b35;
+}
+
+/* =========================================
+   背景動画
+========================================= */
+
+#bgVideo {
+    position: fixed;
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+
+    z-index: -3;
+}
+
+/* 青い透明フィルター */
+
+.videoOverlay {
+    position: fixed;
+    inset: 0;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(20, 80, 125, 0.22),
+            rgba(0, 25, 60, 0.38)
+        );
+
+    z-index: -2;
+
+    pointer-events: none;
+}
+
+/* =========================================
+   メイン
+========================================= */
+
+.timerPage {
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+}
+
+/* ブランド */
+
+.logo {
+    position: absolute;
+
+    top: 25px;
+    left: 30px;
+
+    font-size: 22px;
+    font-weight: bold;
+
+    letter-spacing: 2px;
+
+    text-shadow:
+        0 2px 10px rgba(0,0,0,0.25);
+}
+
+.logo span {
+    font-weight: normal;
+}
+
+/* =========================================
+   時計
+========================================= */
+
+.clock {
+
+    width: min(72vw, 420px);
+    height: min(72vw, 420px);
+
+    min-width: 260px;
+    min-height: 260px;
+
+    max-width: 420px;
+    max-height: 420px;
+
+    border-radius: 50%;
+
+    position: relative;
+
+    background:
+        rgba(255,255,255,0.17);
+
+    border:
+        1.5px solid rgba(255,255,255,0.65);
+
+    box-shadow:
+        0 10px 45px rgba(0,30,80,0.25),
+        inset 0 0 30px rgba(255,255,255,0.12);
+
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+/* =========================================
+   時計の目盛り
+========================================= */
+
+.clockMark {
+    position: absolute;
+
+    width: 2px;
+    height: 13px;
+
+    background: rgba(255,255,255,0.65);
+
+    left: 50%;
+    top: 8px;
+
+    transform-origin:
+        50% calc((min(72vw,420px) / 2) - 8px);
+
+    border-radius: 10px;
+}
+
+/* 12個の目盛り */
+
+.mark1  { transform: translateX(-50%) rotate(0deg); }
+.mark2  { transform: translateX(-50%) rotate(30deg); }
+.mark3  { transform: translateX(-50%) rotate(60deg); }
+.mark4  { transform: translateX(-50%) rotate(90deg); }
+.mark5  { transform: translateX(-50%) rotate(120deg); }
+.mark6  { transform: translateX(-50%) rotate(150deg); }
+.mark7  { transform: translateX(-50%) rotate(180deg); }
+.mark8  { transform: translateX(-50%) rotate(210deg); }
+.mark9  { transform: translateX(-50%) rotate(240deg); }
+.mark10 { transform: translateX(-50%) rotate(270deg); }
+.mark11 { transform: translateX(-50%) rotate(300deg); }
+.mark12 { transform: translateX(-50%) rotate(330deg); }
+
+/* =========================================
+   針
+========================================= */
+
+.hand {
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    width: 4px;
+
+    height: 38%;
+
+    background: white;
+
+    border-radius: 10px;
+
+    transform-origin:
+        50% 100%;
+
+    transform:
+        translate(-50%, -100%)
+        rotate(0deg);
+
+    box-shadow:
+        0 0 8px rgba(255,255,255,0.7);
+
+    transition:
+        transform 0.4s linear;
+}
+
+/* 中心 */
+
+.centerDot {
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    width: 17px;
+    height: 17px;
+
+    transform: translate(-50%, -50%);
+
+    border-radius: 50%;
+
+    background: white;
+
+    box-shadow:
+        0 0 12px rgba(255,255,255,0.8);
+}
+
+/* =========================================
+   時間表示
+========================================= */
+
+.timeDisplay {
+
+    position: absolute;
+
+    left: 50%;
+    top: 58%;
+
+    transform: translate(-50%, -50%);
+
+    font-family:
+        "Yu Gothic",
+        sans-serif;
+
+    font-size: clamp(28px, 7vw, 46px);
+
+    font-weight: 300;
+
+    letter-spacing: 3px;
+
+    white-space: nowrap;
+
+    text-shadow:
+        0 2px 12px rgba(0,0,0,0.2);
+}
+
+/* 目標時間 */
+
+.goalText {
+
+    position: absolute;
+
+    left: 50%;
+    top: 70%;
+
+    transform: translateX(-50%);
+
+    font-size: 13px;
+
+    letter-spacing: 1px;
+
+    opacity: 0.8;
+
+    white-space: nowrap;
+}
+
+/* =========================================
+   設定パネル
+========================================= */
+
+.settingPanel {
+
+    margin-top: 25px;
+
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    padding: 10px 15px;
+
+    background:
+        rgba(255,255,255,0.16);
+
+    border:
+        1px solid rgba(255,255,255,0.4);
+
+    border-radius: 25px;
+
+    backdrop-filter: blur(8px);
+}
+
+.settingPanel input {
+
+    width: 65px;
+
+    padding: 7px 5px;
+
+    border: none;
+    outline: none;
+
+    border-radius: 12px;
+
+    text-align: center;
+
+    font-size: 15px;
+
+    background:
+        rgba(255,255,255,0.75);
+
+    color: #24577c;
+}
+
+.settingPanel span {
+    font-size: 13px;
+}
+
+/* =========================================
+   ボタン
+========================================= */
+
+.buttons {
+
+    display: flex;
+
+    gap: 10px;
+
+    margin-top: 15px;
+}
+
+.volumeControl {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 5px 0 18px;
+}
+
+.volumeControl input {
+    width: 120px;
+    accent-color: #0095d9;
+    cursor: pointer;
+}
+
+button {
+
+    border: none;
+
+    padding: 11px 22px;
+
+    border-radius: 25px;
+
+    background:
+        rgba(255,255,255,0.24);
+
+    color: white;
+
+    font-family: inherit;
+
+    font-size: 14px;
+
+    cursor: pointer;
+
+    border:
+        1px solid rgba(255,255,255,0.45);
+
+    backdrop-filter: blur(7px);
+
+    transition:
+        transform 0.15s,
+        background 0.15s;
+}
+
+button:hover {
+
+    background:
+        rgba(255,255,255,0.36);
+
+    transform: translateY(-2px);
+}
+
+button:active {
+    transform: scale(0.96);
+}
+
+.homeButton {
+    position: absolute;
+    top: 20px;
+    right: 25px;
+
+    padding: 9px 16px;
+
+    border: 1px solid rgba(255,255,255,0.45);
+    border-radius: 25px;
+
+    background: rgba(255,255,255,0.24);
+    color: white;
+
+    font-size: 13px;
+    text-decoration: none;
+
+    backdrop-filter: blur(7px);
+
+    transition:
+        transform 0.15s,
+        background 0.15s;
+}
+
+.homeButton:hover {
+    background: rgba(255,255,255,0.36);
+    transform: translateY(-2px);
+}
+
+.homeButton:active {
+    transform: scale(0.96);
+}
+
+/* =========================================
+   完了表示
+========================================= */
+
+.completeMessage {
+
+    position: fixed;
+
+    inset: 0;
+
+    display: none;
+
+    align-items: center;
+    justify-content: center;
+
+    background:
+        rgba(0,30,65,0.35);
+
+    backdrop-filter: blur(5px);
+
+    z-index: 20;
+}
+
+.completeBox {
+
+    padding: 30px 40px;
+
+    border-radius: 25px;
+
+    text-align: center;
+
+    background:
+        rgba(255,255,255,0.22);
+
+    border:
+        1px solid rgba(255,255,255,0.55);
+
+    backdrop-filter: blur(15px);
+
+    box-shadow:
+        0 10px 40px rgba(0,0,0,0.2);
+}
+
+.completeBox h2 {
+    margin: 0 0 8px;
+    font-size: 25px;
+}
+
+.completeBox p {
+    margin: 0 0 20px;
+    font-size: 14px;
+}
+
+.focusLock {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    z-index: 30;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: min(34vw, 380px);
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: #000;
+    border: 2px solid rgba(255,255,255,.8);
+    box-shadow: 0 8px 30px rgba(0,0,0,.35);
+}
+
+.focusLock video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+@media (max-width: 600px) {
+    .focusLock {
+        right: 16px;
+        bottom: 16px;
+        width: min(72vw, 340px);
+    }
+}
+
+
+/* =====================================================
+   【追加】完了画面
+   元のcompleteBoxをベースに追加
+===================================================== */
+
+.completeResult {
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 30px;
+
+}
+
+
+/* 左側 */
+
+.resultLeft {
+
+    text-align: center;
+
+    min-width: 180px;
+
+}
+
+
+.resultKicker {
+
+    font-size: 11px;
+
+    letter-spacing: 3px;
+
+    opacity: 0.75;
+
+    margin-bottom: 8px;
+
+}
+
+
+.resultStudyTime {
+
+    font-size: clamp(
+        27px,
+        6vw,
+        43px
+    );
+
+    letter-spacing: 2px;
+
+    white-space: nowrap;
+
+    text-shadow:
+        0 2px 12px rgba(0,0,0,0.2);
+
+}
+
+
+.resultText {
+
+    margin:
+        13px 0 18px;
+
+    line-height: 1.8;
+
+    font-size: 13px;
+
+}
+
+
+/* =========================================
+   【追加】花瓶
+========================================= */
+
+.resultRight {
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+}
+
+
+.flowerBottle {
+
+    position: relative;
+
+    width: 180px;
+
+    height: 200px;
+
+}
+
+
+#flowerWaterCanvas {
+
+    position: absolute;
+
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    z-index: 1;
+
+    pointer-events: none;
+
+}
+
+
+#flowerBottleImage {
+
+    position: absolute;
+
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    object-fit: contain;
+
+    z-index: 2;
+
+    pointer-events: none;
+
+}
+
+
+.bottleCaption {
+
+    margin-top: 2px;
+
+    font-size: 10px;
+
+    letter-spacing: 3px;
+
+    opacity: 0.7;
+
+}
+
+
+/* =========================================
+   【追加】完了画面の入場
+========================================= */
+
+.completeResult {
+
+    animation:
+        aquaRoseResultAppear
+        0.65s
+        ease
+        both;
+
+}
+
+
+@keyframes aquaRoseResultAppear {
+
+    from {
+
+        opacity: 0;
+
+        transform:
+            translateY(10px)
+            scale(0.98);
+
+    }
+
+    to {
+
+        opacity: 1;
+
+        transform:
+            translateY(0)
+            scale(1);
+
+    }
+
+}
+
+
+/* =========================================
+   スマホ
+========================================= */
+
+@media (max-width: 600px) {
+
+    .logo {
+        top: 15px;
+        left: 18px;
+        font-size: 18px;
+    }
+
+    .homeButton {
+        top: 13px;
+        right: 15px;
+        padding: 8px 12px;
+    }
+
+    .clock {
+        width: 75vw;
+        height: 75vw;
+
+        min-width: 240px;
+        min-height: 240px;
+    }
+
+    .settingPanel {
+        margin-top: 18px;
+    }
+
+    .buttons button {
+        padding: 9px 16px;
+    }
+
+
+    /* 【追加】完了画面スマホ */
+
+    .completeResult {
+
+        gap: 8px;
+
+        padding:
+            22px 18px;
+
+    }
+
+
+    .resultLeft {
+
+        min-width: 0;
+
+    }
+
+
+    .flowerBottle {
+
+        width: 125px;
+
+        height: 145px;
+
+    }
+
+
+    .resultStudyTime {
+
+        font-size: 25px;
+
+    }
+
+
+    .resultText {
+
+        font-size: 11px;
+
+    }
+
+}
+
+
+/* 横向きスマホ */
+
+@media
+(max-height: 500px)
+and (orientation: landscape) {
+
+    .timerPage {
+        flex-direction: row;
+        gap: 25px;
+    }
+
+    .clock {
+        width: 70vh;
+        height: 70vh;
+
+        min-width: 220px;
+        min-height: 220px;
+
+        max-width: 340px;
+        max-height: 340px;
+    }
+
+    .settingPanel {
+        margin-top: 10px;
+    }
+
+    .logo {
+        top: 10px;
+        left: 15px;
+    }
+
+
+    /* 【追加】横向きスマホ */
+
+    .completeResult {
+
+        gap: 15px;
+
+        padding:
+            18px 22px;
+
+    }
+
+
+    .flowerBottle {
+
+        width: 125px;
+
+        height: 145px;
+
+    }
+
+}
+
+</style>
+</head>
+
+
+<body>
+
+
+<!-- =========================================
+     背景動画
+     ※ここを自分の動画ファイル名に変更
+========================================= -->
+
+<video
+    id="bgVideo"
+    autoplay
+    loop
+    playsinline>
+
+    <source
+        src="time.mp4"
+        type="video/mp4">
+
+</video>
+
+<div class="videoOverlay"></div>
+
+<div
+    id="focusLock"
+    class="focusLock">
+    <video id="fightVideo" autoplay playsinline muted>
+        <source src="fight.mp4" type="video/mp4">
+    </video>
+</div>
+
+
+<div class="timerPage">
+
+    <div class="logo">
+        aqua<span>ROSE</span>
+    </div>
+
+    <a class="homeButton" href="index.htm">
+        ⌂ ホーム
+    </a>
+
+
+    <!-- =====================================
+         時計
+    ====================================== -->
+
+    <div class="clock">
+
+        <div class="clockMark mark1"></div>
+        <div class="clockMark mark2"></div>
+        <div class="clockMark mark3"></div>
+        <div class="clockMark mark4"></div>
+        <div class="clockMark mark5"></div>
+        <div class="clockMark mark6"></div>
+        <div class="clockMark mark7"></div>
+        <div class="clockMark mark8"></div>
+        <div class="clockMark mark9"></div>
+        <div class="clockMark mark10"></div>
+        <div class="clockMark mark11"></div>
+        <div class="clockMark mark12"></div>
+
+        <div
+            id="hand"
+            class="hand">
+        </div>
+
+        <div class="centerDot"></div>
+
+        <div
+            id="timeDisplay"
+            class="timeDisplay">
+            00:00:00
+        </div>
+
+        <div
+            id="goalText"
+            class="goalText">
+            GOAL 60 MIN
+        </div>
+
+    </div>
+
+
+    <!-- =====================================
+         時間設定
+    ====================================== -->
+
+    <div class="settingPanel">
+
+        <span>目標</span>
+
+        <input
+            id="hours"
+            type="number"
+            min="0"
+            max="23"
+            value="1">
+
+        <span>時間</span>
+
+        <input
+            id="minutes"
+            type="number"
+            min="0"
+            max="59"
+            value="0">
+
+        <span>分</span>
+
+    </div>
+
+
+    <!-- =====================================
+         ボタン
+    ====================================== -->
+
+    <div class="buttons">
+
+        <button onclick="startTimer()">
+            ▶ スタート
+        </button>
+
+        <button onclick="pauseTimer()">
+            ⏸ 一時停止
+        </button>
+
+        <button onclick="resetTimer()">
+            ↻ リセット
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================
+     半分到達時の水滴音
+========================================= -->
+
+<audio
+    id="halfSound"
+    preload="auto">
+
+    <source
+        src="tansan01.mp3"
+        type="audio/mpeg">
+
+</audio>
+
+
+<!-- =====================================================
+     【追加】風鈴
+===================================================== -->
+
+<audio
+    id="windChime"
+    preload="auto">
+
+    <source
+        src="wind_chime.mp3"
+        type="audio/mpeg">
+
+</audio>
+
+
+<!-- =====================================================
+     【追加】K-POP音声
+
+     MP4をaudioとして読み込むので、
+     映像は表示されず音だけ流れます。
+===================================================== -->
+
+<audio
+    id="kpopAudio"
+    preload="auto">
+</audio>
+
+
+<!-- =========================================
+     完了画面
+========================================= -->
+
+<div
+    id="completeMessage"
+    class="completeMessage">
+
+    <div
+        class="completeBox completeResult">
+
+
+        <!-- =====================================
+             【追加】左側
+        ====================================== -->
+
+        <div class="resultLeft">
+
+            <div class="resultKicker">
+                TODAY'S STUDY
+            </div>
+
+            <div
+                id="resultStudyTime"
+                class="resultStudyTime">
+                00:00:00
+            </div>
+
+            <p class="resultText">
+                今日もひとつ、<br>
+                夢に近づきました。
+            </p>
+
+            <button onclick="closeComplete()">
+                もう一度
+            </button>
+
+            <div class="volumeControl">
+                <span>🎧</span>
+                <input
+                    id="kpopVolume"
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value="0.4"
+                >
+            </div>
+
+        </div>
+
+
+        <!-- =====================================
+             【追加】右側：花瓶
+        ====================================== -->
+
+        <div class="resultRight">
+
+            <div class="flowerBottle">
+
+                <canvas
+                    id="flowerWaterCanvas">
+                </canvas>
+
+                <img
+                    id="flowerBottleImage"
+                    src="assets/flower.png"
+                    alt="">
+
+            </div>
+
+            <div class="bottleCaption">
+                1 HOUR
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* =====================================================
+   タイマー変数
+===================================================== */
+
+let timer = null;
+
+let elapsedSeconds = 0;
+
+let goalSeconds = 60 * 60;
+
+let halfSoundPlayed = false;
+
+let leftTimerPage = false;
+
+
+/* =====================================================
+   DOM
+===================================================== */
+
+const hand =
+    document.getElementById("hand");
+
+const timeDisplay =
+    document.getElementById("timeDisplay");
+
+const goalText =
+    document.getElementById("goalText");
+
+const hoursInput =
+    document.getElementById("hours");
+
+const minutesInput =
+    document.getElementById("minutes");
+
+const halfSound =
+    document.getElementById("halfSound");
+
+const bgVideo =
+    document.getElementById("bgVideo");
+
+const focusLock =
+    document.getElementById("focusLock");
+
+const fightVideo =
+    document.getElementById("fightVideo");
+
+fightVideo.addEventListener("ended", () => {
+    focusLock.style.display = "none";
+    fightVideo.currentTime = 0;
+    leftTimerPage = false;
+});
+
+
+/* =====================================================
+   【追加】完了画面用DOM
+===================================================== */
+
+const windChime =
+    document.getElementById("windChime");
+
+const kpopAudio =
+    document.getElementById("kpopAudio");
+
+const kpopVolume =
+    document.getElementById("kpopVolume");
+
+kpopVolume.addEventListener(
+    "input",
+    () => {
+        kpopAudio.volume =
+            Number(kpopVolume.value);
+    }
+);
+
+const resultStudyTime =
+    document.getElementById("resultStudyTime");
+
+const flowerBottleImage =
+    document.getElementById("flowerBottleImage");
+
+const flowerWaterCanvas =
+    document.getElementById("flowerWaterCanvas");
+
+
+/* =====================================================
+   【追加】K-POP一覧
+===================================================== */
+
+const KPOP_SONGS = [
+    "music/Cherish.mp4",
+    "music/CRUSH.mp4",
+    "music/IAM.mp4",
+    "music/Magnetic.mp4",
+    "music/OMG.mp4",
+    "music/Perfect%20Night.mp4",
+    "music/RUDE.mp4",
+    "music/STYLE.mp4",
+    "music/Violeta.mp4"
+];
+
+let currentSongIndex = -1;
+
+
+/* =====================================================
+   時間を取得
+===================================================== */
+
+function getGoalSeconds() {
+
+    const hours =
+        Number(hoursInput.value) || 0;
+
+    const minutes =
+        Number(minutesInput.value) || 0;
+
+    return (
+        hours * 60 * 60 +
+        minutes * 60
+    );
+}
+
+
+/* =====================================================
+   時間表示
+===================================================== */
+
+function formatTime(seconds) {
+
+    const h =
+        Math.floor(seconds / 3600);
+
+    const m =
+        Math.floor(
+            (seconds % 3600) / 60
+        );
+
+    const s =
+        seconds % 60;
+
+
+    return (
+        String(h).padStart(2, "0")
+        + ":" +
+        String(m).padStart(2, "0")
+        + ":" +
+        String(s).padStart(2, "0")
+    );
+}
+
+
+/* =====================================================
+   時計更新
+===================================================== */
+
+function updateDisplay() {
+
+    timeDisplay.textContent =
+        formatTime(elapsedSeconds);
+
+
+    /* 目標時間に対する進行率 */
+
+    const progress =
+        elapsedSeconds / goalSeconds;
+
+
+    /*
+       12時間時計のように
+       0 → 360度まで針を回す
+    */
+
+    const angle =
+        Math.min(progress, 1) * 360;
+
+
+    hand.style.transform =
+        `translate(-50%, -100%)
+         rotate(${angle}deg)`;
+
+
+    /* 目標時間表示 */
+
+    const hours =
+        Math.floor(goalSeconds / 3600);
+
+    const minutes =
+        Math.floor(
+            (goalSeconds % 3600) / 60
+        );
+
+
+    if (hours > 0) {
+
+        goalText.textContent =
+            `GOAL ${hours}時間 ${minutes}分`;
+
+    } else {
+
+        goalText.textContent =
+            `GOAL ${minutes}分`;
+    }
+}
+
+
+/* =====================================================
+   タイマー開始
+===================================================== */
+
+function startTimer() {
+
+    if (timer !== null) {
+        return;
+    }
+
+
+    /* 設定された目標時間 */
+
+    if (elapsedSeconds === 0) {
+
+        goalSeconds =
+            getGoalSeconds();
+
+
+        if (goalSeconds <= 0) {
+
+            alert(
+                "目標時間を設定してください🌹"
+            );
+
+            return;
+        }
+
+        halfSoundPlayed = false;
+    }
+
+
+    /*
+       背景動画を再生
+    */
+
+    bgVideo.play().catch(() => {});
+
+    leftTimerPage = false;
+
+
+    /*
+       1秒ごとに更新
+    */
+
+    timer = setInterval(() => {
+
+        elapsedSeconds++;
+
+        updateDisplay();
+
+
+        /* =====================================
+           半分到達
+        ====================================== */
+
+        if (
+            !halfSoundPlayed &&
+            elapsedSeconds >= goalSeconds / 2
+        ) {
+
+            halfSoundPlayed = true;
+
+
+            halfSound.currentTime = 0;
+
+            halfSound.play().catch(() => {});
+
+
+            /*
+               時計を少しだけ光らせる
+            */
+
+            document.querySelector(".clock")
+                .animate(
+                    [
+                        {
+                            boxShadow:
+                                "0 10px 45px rgba(0,30,80,0.25)"
+                        },
+                        {
+                            boxShadow:
+                                "0 0 60px rgba(180,230,255,0.8)"
+                        },
+                        {
+                            boxShadow:
+                                "0 10px 45px rgba(0,30,80,0.25)"
+                        }
+                    ],
+                    {
+                        duration: 1200
+                    }
+                );
+        }
+
+
+        /* =====================================
+           目標到達
+        ====================================== */
+
+        if (elapsedSeconds >= goalSeconds) {
+
+            clearInterval(timer);
+
+            timer = null;
+
+            elapsedSeconds =
+                goalSeconds;
+
+            updateDisplay();
+
+            showComplete();
+        }
+
+    }, 1000);
+}
+
+document.addEventListener("visibilitychange", () => {
+    if (timer === null) {
+        return;
+    }
+
+    if (document.hidden) {
+        leftTimerPage = true;
+        return;
+    }
+
+    if (leftTimerPage) {
+        focusLock.style.display = "flex";
+        fightVideo.currentTime = 0;
+        fightVideo.muted = false;
+        fightVideo.play().catch(() => {});
+    }
+});
+
+
+/* =====================================================
+   一時停止
+===================================================== */
+
+function pauseTimer() {
+
+    if (timer !== null) {
+
+        clearInterval(timer);
+
+        timer = null;
+    }
+}
+
+
+/* =====================================================
+   リセット
+===================================================== */
+
+function resetTimer() {
+
+    clearInterval(timer);
+
+    timer = null;
+
+    elapsedSeconds = 0;
+
+    goalSeconds =
+        getGoalSeconds();
+
+    halfSoundPlayed = false;
+
+    updateDisplay();
+}
+
+
+/* =====================================================
+   完了画面
+===================================================== */
+
+function showComplete() {
+
+    focusLock.style.display = "none";
+    fightVideo.pause();
+
+    /*
+       【追加】
+       勉強時間を表示
+    */
+
+    resultStudyTime.textContent =
+        formatTime(elapsedSeconds);
+
+
+    /*
+       元の完了画面を表示
+    */
+
+    document
+        .getElementById("completeMessage")
+        .style.display = "flex";
+
+
+    /*
+       【追加】
+       花瓶に水を入れる
+    */
+
+    animateFlowerWater(
+        elapsedSeconds
+    );
+
+
+    /*
+       【追加】
+       風鈴 → K-POP
+    */
+
+    windChime.currentTime = 0;
+
+    windChime.play()
+        .then(() => {
+
+            const waitTime =
+                windChime.duration &&
+                isFinite(windChime.duration)
+                    ? windChime.duration * 1000
+                    : 1500;
+
+
+            setTimeout(
+                () => {
+
+                    playKpop();
+
+                },
+                waitTime
+            );
+
+        })
+        .catch(() => {
+
+            /*
+               音声再生が拒否された場合
+            */
+
+            setTimeout(
+                () => {
+
+                    playKpop();
+
+                },
+                700
+            );
+
+        });
+
+}
+
+
+/* =====================================================
+   【追加】
+   K-POPをランダム再生
+===================================================== */
+
+function playKpop() {
+
+    if (
+        KPOP_SONGS.length === 0
+    ) {
+
+        return;
+    }
+
+    bgVideo.muted = true;
+
+
+    let nextIndex;
+
+
+    do {
+
+        nextIndex =
+            Math.floor(
+                Math.random() *
+                KPOP_SONGS.length
+            );
+
+    } while (
+        KPOP_SONGS.length > 1 &&
+        nextIndex === currentSongIndex
+    );
+
+
+    currentSongIndex =
+        nextIndex;
+
+
+    /*
+       MP4をaudio要素で再生
+
+       ↓
+
+       映像は表示されない
+
+       ↓
+
+       音声だけ流れる
+    */
+
+    kpopAudio.src =
+        KPOP_SONGS[currentSongIndex];
+
+    kpopAudio.currentTime = 0;
+
+    kpopAudio.volume =
+        Number(kpopVolume.value);
+
+    kpopAudio.play()
+        .catch(() => {});
+
+}
+
+
+/* =====================================================
+   【追加】
+   曲が終わったら次の曲
+===================================================== */
+
+kpopAudio.addEventListener(
+    "ended",
+    () => {
+
+        const complete =
+            document.getElementById(
+                "completeMessage"
+            );
+
+
+        if (
+            complete.style.display !== "flex"
+        ) {
+
+            return;
+        }
+
+
+        playKpop();
+
+    }
+);
+
+
+/* =====================================================
+   完了画面を閉じる
+===================================================== */
+
+function closeComplete() {
+
+    document
+        .getElementById("completeMessage")
+        .style.display = "none";
+
+    bgVideo.muted = false;
+
+
+    /*
+       【追加】
+       K-POP停止
+    */
+
+    kpopAudio.pause();
+
+    kpopAudio.currentTime = 0;
+
+
+    /*
+       風鈴も停止
+    */
+
+    windChime.pause();
+
+    windChime.currentTime = 0;
+
+
+    resetTimer();
+}
+
+
+/* =====================================================
+   時間設定変更時
+===================================================== */
+
+hoursInput.addEventListener(
+    "change",
+    () => {
+
+        if (timer === null) {
+
+            goalSeconds =
+                getGoalSeconds();
+
+            updateDisplay();
+        }
+    }
+);
+
+
+minutesInput.addEventListener(
+    "change",
+    () => {
+
+        if (timer === null) {
+
+            goalSeconds =
+                getGoalSeconds();
+
+            updateDisplay();
+        }
+    }
+);
+
+
+/* =====================================================
+   初期表示
+===================================================== */
+
+goalSeconds =
+    getGoalSeconds();
+
+updateDisplay();
+
+
+/* =====================================================
+   =====================================================
+   【追加】ここから花瓶の水システム
+   =====================================================
+===================================================== */
+
+
+/* =====================================================
+   花瓶Canvas
+===================================================== */
+
+let flowerMaskCanvas = null;
+
+let flowerMaskReady = false;
+
+
+/* =====================================================
+   花瓶画像読み込み
+===================================================== */
+
+flowerBottleImage.addEventListener(
+    "load",
+    () => {
+
+        createFlowerMask();
+
+    }
+);
+
+
+/* =====================================================
+   花瓶内部マスク作成
+===================================================== */
+
+function createFlowerMask() {
+
+    const img =
+        flowerBottleImage;
+
+
+    const w =
+        img.naturalWidth;
+
+    const h =
+        img.naturalHeight;
+
+
+    if (
+        !w ||
+        !h
+    ) {
+
+        return;
+    }
+
+
+    /*
+       元画像
+    */
+
+    const sourceCanvas =
+        document.createElement(
+            "canvas"
+        );
+
+
+    sourceCanvas.width =
+        w;
+
+    sourceCanvas.height =
+        h;
+
+
+    const sourceCtx =
+        sourceCanvas.getContext(
+            "2d"
+        );
+
+
+    sourceCtx.drawImage(
+        img,
+        0,
+        0
+    );
+
+
+    const imageData =
+        sourceCtx.getImageData(
+            0,
+            0,
+            w,
+            h
+        );
+
+
+    const data =
+        imageData.data;
+
+
+    /*
+       マスク
+
+       0 = 未分類
+       1 = 外側
+       2 = 内部
+       3 = 瓶そのもの
+    */
+
+    const mask =
+        new Uint8Array(
+            w * h
+        );
+
+
+    /*
+       瓶部分
+    */
+
+    for (
+        let y = 0;
+        y < h;
+        y++
+    ) {
+
+        for (
+            let x = 0;
+            x < w;
+            x++
+        ) {
+
+            const i =
+                (y * w + x) * 4;
+
+
+            const alpha =
+                data[i + 3];
+
+
+            if (
+                alpha > 35
+            ) {
+
+                mask[
+                    y * w + x
+                ] = 3;
+
+            }
+
+        }
+
+    }
+
+
+    /*
+       外側を探索
+    */
+
+    const queue = [];
+
+
+    function addOutside(
+        x,
+        y
+    ) {
+
+        if (
+            x < 0 ||
+            y < 0 ||
+            x >= w ||
+            y >= h
+        ) {
+
+            return;
+        }
+
+
+        const index =
+            y * w + x;
+
+
+        if (
+            mask[index] !== 0
+        ) {
+
+            return;
+        }
+
+
+        mask[index] = 1;
+
+        queue.push(index);
+
+    }
+
+
+    /*
+       四辺
+    */
+
+    for (
+        let x = 0;
+        x < w;
+        x++
+    ) {
+
+        addOutside(
+            x,
+            0
+        );
+
+        addOutside(
+            x,
+            h - 1
+        );
+
+    }
+
+
+    for (
+        let y = 0;
+        y < h;
+        y++
+    ) {
+
+        addOutside(
+            0,
+            y
+        );
+
+        addOutside(
+            w - 1,
+            y
+        );
+
+    }
+
+
+    /*
+       Flood Fill
+    */
+
+    let pointer = 0;
+
+
+    while (
+        pointer < queue.length
+    ) {
+
+        const index =
+            queue[pointer++];
+
+
+        const x =
+            index % w;
+
+
+        const y =
+            Math.floor(
+                index / w
+            );
+
+
+        addOutside(
+            x + 1,
+            y
+        );
+
+        addOutside(
+            x - 1,
+            y
+        );
+
+        addOutside(
+            x,
+            y + 1
+        );
+
+        addOutside(
+            x,
+            y - 1
+        );
+
+    }
+
+
+    /*
+       残った透明部分
+       ↓
+       花瓶内部
+    */
+
+    for (
+        let i = 0;
+        i < mask.length;
+        i++
+    ) {
+
+        if (
+            mask[i] === 0
+        ) {
+
+            mask[i] = 2;
+
+        }
+
+    }
+
+
+    /*
+       マスクCanvas
+    */
+
+    flowerMaskCanvas =
+        document.createElement(
+            "canvas"
+        );
+
+
+    flowerMaskCanvas.width =
+        w;
+
+    flowerMaskCanvas.height =
+        h;
+
+
+    const maskCtx =
+        flowerMaskCanvas.getContext(
+            "2d"
+        );
+
+
+    const maskImage =
+        maskCtx.createImageData(
+            w,
+            h
+        );
+
+
+    const maskData =
+        maskImage.data;
+
+
+    for (
+        let i = 0;
+        i < mask.length;
+        i++
+    ) {
+
+        if (
+            mask[i] === 2
+        ) {
+
+            maskData[i * 4] =
+                255;
+
+            maskData[i * 4 + 1] =
+                255;
+
+            maskData[i * 4 + 2] =
+                255;
+
+            maskData[i * 4 + 3] =
+                255;
+
+        }
+
+    }
+
+
+    maskCtx.putImageData(
+        maskImage,
+        0,
+        0
+    );
+
+
+    flowerMaskReady = true;
+
+}
+
+
+/* =====================================================
+   【追加】
+   勉強時間 → 水位
+===================================================== */
+
+function animateFlowerWater(
+    studySeconds
+) {
+
+    if (
+        !flowerMaskReady
+    ) {
+
+        /*
+           画像読み込み後に再実行
+        */
+
+        flowerBottleImage.addEventListener(
+            "load",
+            () => {
+
+                animateFlowerWater(
+                    studySeconds
+                );
+
+            },
+            {
+                once: true
+            }
+        );
+
+        return;
+    }
+
+
+    const canvas =
+        flowerWaterCanvas;
+
+
+    const ctx =
+        canvas.getContext(
+            "2d"
+        );
+
+
+    const img =
+        flowerBottleImage;
+
+
+    const w =
+        img.naturalWidth;
+
+    const h =
+        img.naturalHeight;
+
+
+    canvas.width =
+        w;
+
+    canvas.height =
+        h;
+
+
+    /*
+       1時間 = 満杯
+
+       1時間以上は満杯
+    */
+
+    const targetLevel =
+        Math.min(
+            studySeconds / 3600,
+            1
+        );
+
+
+    /*
+       水を0から注ぐ
+    */
+
+    const startTime =
+        performance.now();
+
+
+    const duration =
+        2000;
+
+
+    function animateWater(
+        now
+    ) {
+
+        const progress =
+            Math.min(
+                (
+                    now -
+                    startTime
+                ) /
+                duration,
+                1
+            );
+
+
+        /*
+           ゆっくり始まって
+           ゆっくり止まる
+        */
+
+        const eased =
+            1 -
+            Math.pow(
+                1 - progress,
+                3
+            );
+
+
+        const level =
+            targetLevel *
+            eased;
+
+
+        drawFlowerWater(
+            ctx,
+            w,
+            h,
+            level,
+            now
+        );
+
+
+        if (
+            progress < 1
+        ) {
+
+            requestAnimationFrame(
+                animateWater
+            );
+
+        }
+
+    }
+
+
+    requestAnimationFrame(
+        animateWater
+    );
+
+}
+
+
+/* =====================================================
+   【追加】
+   水の描画
+   色：#0095d9
+===================================================== */
+
+function drawFlowerWater(
+    ctx,
+    w,
+    h,
+    level,
+    time
+) {
+
+    ctx.clearRect(
+        0,
+        0,
+        w,
+        h
+    );
+
+
+    if (
+        level <= 0
+    ) {
+
+        return;
+    }
+
+
+    /*
+       水面
+    */
+
+    const waterY =
+        h -
+        h * level;
+
+
+    /*
+       波
+    */
+
+    const waveOffset =
+        time * 0.004;
+
+
+    const points = [];
+
+
+    for (
+        let x = 0;
+        x <= w;
+        x += 3
+    ) {
+
+        const wave1 =
+            Math.sin(
+                x / 55 +
+                waveOffset
+            ) * 9;
+
+
+        const wave2 =
+            Math.sin(
+                x / 30 +
+                waveOffset * 1.7
+            ) * 4;
+
+
+        points.push({
+
+            x: x,
+
+            y:
+                waterY +
+                wave1 +
+                wave2
+
+        });
+
+    }
+
+
+    /*
+       水本体
+    */
+
+    ctx.save();
+
+
+    ctx.beginPath();
+
+
+    ctx.moveTo(
+        0,
+        h
+    );
+
+
+    for (
+        const point of points
+    ) {
+
+        ctx.lineTo(
+            point.x,
+            point.y
+        );
+
+    }
+
+
+    ctx.lineTo(
+        w,
+        h
+    );
+
+
+    ctx.closePath();
+
+
+    /*
+       #0095d9
+
+       少し透明にして
+       ガラスの中の水らしくする
+    */
+
+    const gradient =
+        ctx.createLinearGradient(
+            0,
+            waterY,
+            0,
+            h
+        );
+
+
+    gradient.addColorStop(
+        0,
+        "rgba(0,149,217,0.58)"
+    );
+
+
+    gradient.addColorStop(
+        0.4,
+        "rgba(0,149,217,0.72)"
+    );
+
+
+    gradient.addColorStop(
+        1,
+        "rgba(0,149,217,0.88)"
+    );
+
+
+    ctx.fillStyle =
+        gradient;
+
+
+    ctx.fill();
+
+
+    /*
+       花瓶内部だけ残す
+    */
+
+    ctx.globalCompositeOperation =
+        "destination-in";
+
+
+    ctx.drawImage(
+        flowerMaskCanvas,
+        0,
+        0
+    );
+
+
+    ctx.restore();
+
+
+    /*
+       水面の艶
+    */
+
+    ctx.save();
+
+
+    ctx.globalCompositeOperation =
+        "screen";
+
+
+    ctx.beginPath();
+
+
+    for (
+        let i = 0;
+        i < points.length;
+        i++
+    ) {
+
+        const point =
+            points[i];
+
+
+        if (
+            i === 0
+        ) {
+
+            ctx.moveTo(
+                point.x,
+                point.y - 2
+            );
+
+        } else {
+
+            ctx.lineTo(
+                point.x,
+                point.y - 2
+            );
+
+        }
+
+    }
+
+
+    ctx.lineWidth =
+        4;
+
+
+    ctx.strokeStyle =
+        "rgba(255,255,255,0.78)";
+
+
+    ctx.shadowColor =
+        "rgba(255,255,255,0.9)";
+
+
+    ctx.shadowBlur =
+        9;
+
+
+    ctx.stroke();
+
+
+    /*
+       再び花瓶内部に限定
+    */
+
+    ctx.globalCompositeOperation =
+        "destination-in";
+
+
+    ctx.drawImage(
+        flowerMaskCanvas,
+        0,
+        0
+    );
+
+
+    ctx.restore();
+
+}
+
+
+/* =====================================================
+   花瓶画像がすでに読み込まれている場合
+===================================================== */
+
+if (
+    flowerBottleImage.complete
+) {
+
+    createFlowerMask();
+
+}
+
+</script>
+
+</body>
+</html>
